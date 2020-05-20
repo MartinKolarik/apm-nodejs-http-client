@@ -193,7 +193,20 @@ Client.prototype._pollConfig = function () {
           res.destroy(e)
         }
       } else {
-        res.destroy(processConfigErrorResponse(res, buf))
+        res.destroy(new Proxy(processConfigErrorResponse(res, buf), {
+	        get (target, p, receiver) {
+      			if (!target.stacks) {
+      				target.stacks = [];
+		        }
+
+      			function f () {
+			        Error.captureStackTrace(this, f);
+		        };
+
+		        target.stacks.push(new f().stack);
+		        return target[p];
+	        },
+        }));
       }
     })
   })
